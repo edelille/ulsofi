@@ -6,10 +6,10 @@ import scipy.signal
 sample_rate = 44100 # Hz
 sample_packet = 4096
 
-
+ 
 """ Play the given NumPy array, as a sound, for ms milliseconds. """
 def play_for(sample_wave, ms):
-    sound = pygame.sndarray.make_sound(sample_wave.astype(int))
+    sound = pygame.sndarray.make_sound(sample_wave)
     sound.play(-1)
     pygame.time.delay(ms)
     sound.stop()
