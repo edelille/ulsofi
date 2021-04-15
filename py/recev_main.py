@@ -8,7 +8,6 @@ from matplotlib import pyplot as plt
 
 blit = True
 
-
 # Main runtime
 if __name__ == '__main__':
     print('Starting UlSoFi-Py')
@@ -18,19 +17,14 @@ if __name__ == '__main__':
     
 
     plt.ion()
-    X = np.linspace(0,22050,205)
+    X = np.linspace(0,22050,52)
     y = np.cos(X)
 
-    fig = plt.figure()
-    ax1 = fig.add_subplot(2,1,1)
-    ax2 = fig.add_subplot(2,1,2)
+    fig, ax2 = plt.subplots(figsize=(8,6))
+    line1, = ax2.plot(X, y)
 
-    img = ax1.imshow(X, vmin=-1, vmax=1, interpolation="None", cmap="RdBu")
-
-    line1 = ax2.plot([], lw=3)
-
-    ax1.set_xlim(0, 22000)
     ax2.set_ylim([0,1000])
+    text=ax2.text(0.8,0.5, "")
 
     plt.title("Dynamic Plot of mic input",fontsize=25)
     plt.xlabel("Frequency (Hz)",fontsize=18)
@@ -40,14 +34,15 @@ if __name__ == '__main__':
 
     # If blit, set up some blits
     if blit:
-        axbackground = fig.canvas.copy_from_bbox(ax1.bbox)
         ax2background = fig.canvas.copy_from_bbox(ax2.bbox)
 
     plt.show(block=False)
 
+    t_start = time.time()
+    j = 0
     while True: 
         # Read raw microphone data 
-        rawsamps = stream.read(4096, exception_on_overflow = False) 
+        rawsamps = stream.read(1024, exception_on_overflow = False) 
         # Convert raw data to NumPy array 
         samps = np.fromstring(rawsamps, dtype=np.int16) 
         # Calculate the FFT
@@ -58,27 +53,23 @@ if __name__ == '__main__':
         for i in range(len(pfft)):
             ydata[int(i/10)] += pfft[i]
 
+        # FPS Text
+        tx = 'Main Frame Rate:\n {fps:.3f}FPS'.format(fps= ((j+1) / (time.time() - t_start))) 
+        text.set_text(tx)
+        j += 1
 
         # DEBUG Space
         #print("Length of all: ", len(rawsamps), len(ydata), len(pfft))
         
-        
         line1.set_xdata(X)
         line1.set_ydata(ydata)
-        
 
         if blit:
-            fig.canvas.restore_regeion(axbackground)
-            fig.canvas.restore_regeion(ax2background)
-
-            ax1.draw_artist(img)
-            ax2.draw_artist(line)
-            ax2.draw_artist(text)
-
+            fig.canvas.restore_region(ax2background)
+            ax2.draw_artist(line1)
+            #ax2.draw_artist(text)
             # Fill in the axes
-            fig.canvas.blit(ax1.bbox)
             fig.canvas.blit(ax2.bbox)
-
         else:
             fig.canvas.draw()
 
