@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.use('GTK3Agg')
 from matplotlib import pyplot as plt
 
-blit = True
+blit = False
 
 # Main runtime
 if __name__ == '__main__':
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     
 
     plt.ion()
-    X = np.linspace(0,22050,52)
+    X = np.linspace(0,22050,513)
     y = np.cos(X)
 
     fig, ax2 = plt.subplots(figsize=(8,6))
@@ -49,6 +49,7 @@ if __name__ == '__main__':
         pfft = sfft.rfft(samps)
 
         # Parse the FFT
+
         ydata = [0]*int(len(pfft)/10 + 1)
         for i in range(len(pfft)):
             ydata[int(i/10)] += pfft[i]
@@ -62,7 +63,7 @@ if __name__ == '__main__':
         #print("Length of all: ", len(rawsamps), len(ydata), len(pfft))
         
         line1.set_xdata(X)
-        line1.set_ydata(ydata)
+        line1.set_ydata(pfft)
 
         if blit:
             fig.canvas.restore_region(ax2background)
