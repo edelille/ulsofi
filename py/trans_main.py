@@ -41,9 +41,6 @@ def setup_D_arr():
     for i in range(pamt * psize):
         D.append(min + i*itv)
 
-    #Debug Printing
-    print("my D: ", D)
-    
     # Seperate the D arrays into G
     for i in range(len(D)):
         G[int(i / psize)].append(D[i])
@@ -55,25 +52,34 @@ def setup_D_arr():
 
 
 # Args: Insert a byte, play a chord, which is a function of the byte
-def trans_bits8(byte, millis=1000, crno=0):
+def mod_bits8(byte, crno=0):
     csw = numpy.zeros(sample_rate, dtype=numpy.int16)    # Cumulative sinewave
 
     pcount = 0  # Count of positives [1]
     # from a given 8 bit packet, synthesize a normalized array
-    for i in range(len(G[crno])):
+    for i in range(len(byte)):
         if i < (psize - 2): 
             if byte[i] == '1': 
                 pcount += 1
                 isw = sine_wave(G[crno][i], sample_packet )
                 csw = numpy.add(isw, csw)
+            
+        # calculate parity bits
+        if i == len(byte) - 1:
+            pbits = pcount % 4
+            if pbits % 2 == 1:
+                csw = numpy.add(sine_wave(G[crno][psize-2], sample_packet), csw)
+            if int(pbits / 2) == 1:
+                csw = numpy.add(sine_wave(G[crno][psize-1], sample_packet), csw)
+
+    #print('{} has pbits {}'.format(byte, pbits))
 
     # Normalize the Array
     # csw = numpy.true_divide(csw, pcount).astype(numpy.int16)
 
-    play_for(csw, millis)
-    pass
+    return csw
 
-def trans_packet100(bytearr):
+def mod_word32(word, crno=[0]):
     pass
 
 # Reads a file and transform the hexadecimal text into binary text in string
@@ -94,6 +100,26 @@ def trans_file(filename):
     # return the resarr
     return resarr
 
+def enter_playBytes(filedata):
+    for B in filedata:
+        modout = mod_bits8(B)
+        play_for(modout, 100)
+
+def enter_ulsofi_controller(filedata):
+    amtcr = len(G)  # amount of carriers
+
+    # Split up the commands into n amount of carriers
+    for i in range(int(len(filedata) / amtcr)): # iterate exactly amount of revisions it takes to complete the entire message
+        rnsig = numpy.zeros(sample_rate, dtype=numpy.int16)    # running signal
+        for j in range(amtcr):
+            if j + (i * amtcr) < len(filedata): # if iter is logner than filedata do not iter
+                isw = mod_bits8(filedata[j + (i * amtcr)], crno=j)
+                rnsig = numpy.add(rnsig, isw)
+
+        # finally play the running signal
+        play_for(rnsig, 100)
+    
+
 def init():
     pygame.mixer.pre_init(sample_rate, -16, 1) # 44.1kHz, 16-bit signed, mono
     pygame.mixer.init()
@@ -108,8 +134,14 @@ if __name__ == '__main__':
 
     filedata = trans_file('testfile')
 
+
+    # Play by entire firedata
+
     startingtime = time.time()
-    for B in filedata:
-        trans_bits8(B, millis=100)
+
+    enter_playBytes(filedata)
+    enter_ulsofi_controller(filedata)
+
     timeelapsed = time.time() - startingtime
     print("Transmission of {} bytes took {} seconds".format(len(filedata), timeelapsed))
+    time.sleep(5)
