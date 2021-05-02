@@ -133,14 +133,12 @@ if __name__ == '__main__':
     Barr = ['10111011', '10000000', '11001100', '11111111']
 
     filedata = trans_file('testfile')
-
-
     # Play by entire firedata
 
     startingtime = time.time()
 
     enter_playBytes(filedata)
-    enter_ulsofi_controller(filedata)
+    #enter_ulsofi_controller(filedata)
 
     timeelapsed = time.time() - startingtime
     print("Transmission of {} bytes took {} seconds".format(len(filedata), timeelapsed))
