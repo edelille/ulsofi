@@ -8,14 +8,7 @@ from matplotlib import pyplot as plt
 
 blit = False
 
-# Main runtime
-if __name__ == '__main__':
-    print('Starting UlSoFi-Py')
-
-    pyaud = pyaudio.PyAudio()
-    stream = pyaud.open( format = pyaudio.paInt16, channels = 1, rate = 44100, input_device_index = 2, input = True, frames_per_buffer=4096)
-    
-
+def enter_fftVis(pyaud, stream):
     plt.ion()
     X = np.linspace(0,22050,513)
     y = np.cos(X)
@@ -75,6 +68,14 @@ if __name__ == '__main__':
             fig.canvas.draw()
 
         fig.canvas.flush_events()
+
+# Main runtime
+if __name__ == '__main__':
+    print('Starting UlSoFi-Py')
+
+    pyaud = pyaudio.PyAudio()
+    stream = pyaud.open( format = pyaudio.paInt16, channels = 1, rate = 44100, input_device_index = 2, input = True, frames_per_buffer=4096)
+    
 
         
 
