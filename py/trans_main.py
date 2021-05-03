@@ -30,7 +30,7 @@ hexd = {
 
 ## GENERATE FREQUENCY ARRAY BASED ON INTERVAL ##
 min     = 400   # Minimum frequency
-itv     = 100    # Interval size
+itv     = 200    # Interval size
 psize   = 10    # Packet size including parity bits
 pamt    = 5     # Amount of packets
 D = []          # Initializing of D array: int

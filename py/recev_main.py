@@ -10,10 +10,9 @@ blit = False
 
 ############## GLOBAL VARIABLES ##############
 sample_rate = 44100 # Hz
-sample_packet = 4096
-SAMPLE_AMT = 4096
+sample_packet = 16394
 FLU = {}    # Frequency Lookup
-FFT_Threshold = 10000       # Guess based on data
+FFT_Threshold = 2000       # Guess based on data
 
 ## GENERATE FREQUENCY ARRAY BASED ON INTERVAL ##
 min     = 400   # Minimum frequency
@@ -120,7 +119,7 @@ def enter_receiver(pyaud, stream):
         starttime = time.time()
 
         # Read raw microphone data 
-        rawsamps = stream.read(SAMPLE_AMT, exception_on_overflow = False) 
+        rawsamps = stream.read(sample_packet, exception_on_overflow = False) 
         # Convert raw data to NumPy array 
         samps = np.fromstring(rawsamps, dtype=np.int16) 
         # Calculate the FFT
@@ -128,22 +127,38 @@ def enter_receiver(pyaud, stream):
 
 
         # Print the result of many fft results
-        for i in range(10):
-            fftres = pfft[FLU[D[i]]] # fft output at FLU point
-            print("frequency: {}\tFLU:{}\tfftres: {}\tabs(fftres): {}".format(D[i], FLU[D[i]], fftres, abs(fftres)))
-        
+        specific_crno = 0
+        fftres = ''
+        for i in range(len(G[specific_crno])): # TODO first crno only
+            pfft_i = FLU[G[specific_crno][i]]
+            sres = pfft[pfft_i]  # fft output at FLU point
+            print("frequency: {}\tFLU:{}\tabs(fftres): {}\tfftres: {}".format(D[i], FLU[D[i]], abs(np.real(sres)), sres))
 
+            if i == len(G[specific_crno]) - 2:
+                fftres += ', '
+            if sres > FFT_Threshold:
+                fftres += '1'
+            else:
+                fftres += '0'
+
+        print('crno #{} from {} to {}\t=> {}\t currTime: {}'.format(
+            specific_crno,
+            G[specific_crno][0],
+            G[specific_crno][len(G[specific_crno])-1],
+            fftres,
+            time.time()
+        ))
+
+        #time.sleep(1)
 
         elapsed = time.time() - starttime
-        print("it took {} for one sample".format(elapsed))
-
-        time.sleep(5)
+        #print("it took {} for one sample".format(elapsed))
 
 def init():
     # calculate the indices for each fft component
     setup_G_arr()
     
-    freqs = sfft.fftfreq(SAMPLE_AMT, d=(1/sample_rate))
+    freqs = sfft.fftfreq(sample_packet, d=(1/sample_rate))
 
     for fv in D:
         index, res, diff = find_closestFFT(freqs, fv)
@@ -155,9 +170,11 @@ if __name__ == '__main__':
     print('Starting UlSoFi-Py')
 
     pyaud = pyaudio.PyAudio()
-    stream = pyaud.open( format = pyaudio.paInt16, channels = 1, rate = 44100, input_device_index = 2, input = True, frames_per_buffer=4096)
+    stream = pyaud.open( format = pyaudio.paInt16, channels = 1, rate = 44100, input_device_index = 2, input = True, frames_per_buffer=sample_packet)
     
     init()
+
+
     #enter_fftVis(pyaud, stream)
     enter_receiver(pyaud, stream)
     
